@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canteen Token Counter</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-board:#1f2e28;
+    --bg-board-2:#243a31;
+    --paper:#f3ecd9;
+    --paper-2:#ece2c9;
+    --ink:#2b2b21;
+    --ink-soft:#5c6b5f;
+    --veg:#c98a2b;
+    --veg-soft:#f1ddb0;
+    --nonveg:#a83b2a;
+    --nonveg-soft:#f0c9bd;
+    --steel:#6b7a73;
+    --line:#c9bd97;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:var(--bg-board);
+    color:var(--ink);
+    min-height:100vh;
+  }
+
+  .board{
+    max-width:920px;
+    margin:0 auto;
+    padding:36px 20px 60px;
+  }
+
+  header.site-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:3px double var(--line);
+    padding-bottom:14px;
+    margin-bottom:28px;
+  }
+
+  header.site-head h1{
+    font-family:'Archivo Black',sans-serif;
+    color:var(--paper);
+    font-size:26px;
+    letter-spacing:0.5px;
+    margin:0;
+  }
+
+  header.site-head span{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--veg-soft);
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+  }
+
+  .hidden{display:none !important;}
+
+  /* ---- Ticket / card look ---- */
+  .ticket{
+    background:var(--paper);
+    border-radius:4px;
+    position:relative;
+    padding:26px 28px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.35);
+  }
+
+  .ticket::before, .ticket::after{
+    content:"";
+    position:absolute;
+    top:-8px;
+    width:16px;
+    height:16px;
+    background:var(--bg-board);
+    border-radius:50%;
+  }
+  .ticket::before{ left:-8px; }
+  .ticket::after{ right:-8px; }
+
+  .auth-wrap{
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+
+  .auth-wrap .ticket{ width:360px; max-width:100%; }
+
+  .ticket h2{
+    font-family:'Archivo Black',sans-serif;
+    font-size:20px;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+
+  .ticket .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:18px;
+    display:block;
+  }
+
+  label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.4px;
+    margin:14px 0 6px;
+    color:var(--ink-soft);
+  }
+
+  input, select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:#fffdf7;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+  }
+
+  input:focus, select:focus, button:focus{
+    outline:2px solid var(--veg);
+    outline-offset:1px;
+  }
+
+  .btn{
+    margin-top:20px;
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:3px;
+    background:var(--bg-board);
+    color:var(--paper);
+    font-family:'Archivo Black',sans-serif;
+    font-size:13px;
+    letter-spacing:0.6px;
+    cursor:pointer;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .btn:hover{ background:var(--bg-board-2); transform:translateY(-1px); }
+
+  .btn.veg{ background:var(--veg); color:#2b2110; }
+  .btn.veg:hover{ background:#b87d24; }
+  .btn.nonveg{ background:var(--nonveg); color:#fff3ee; }
+  .btn.nonveg:hover{ background:#8f3122; }
+
+  .switch-line{
+    margin-top:14px;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  .switch-line a{ color:var(--nonveg); cursor:pointer; font-weight:600; text-decoration:none; }
+
+  .msg{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    margin-top:10px;
+    min-height:14px;
+  }
+  .msg.error{ color:var(--nonveg); }
+  .msg.ok{ color:#3e6b2f; }
+
+  /* ---- Dashboard ---- */
+  .dash-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-bottom:22px;
+  }
+
+  .dash-head .who{
+    font-family:'Archivo Black',sans-serif;
+    color:var(--paper);
+    font-size:20px;
+  }
+  .dash-head .who small{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--veg-soft);
+    letter-spacing:1.5px;
+    margin-top:4px;
+  }
+
+  .logout-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--paper);
+    padding:9px 16px;
+    border-radius:3px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:1px;
+    cursor:pointer;
+  }
+  .logout-btn:hover{ background:rgba(255,255,255,0.06); }
+
+  .stats-row{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+    margin-bottom:24px;
+  }
+
+  .token-stat{
+    background:var(--paper);
+    border-radius:50%;
+    aspect-ratio:1/1;
+    width:150px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    border:3px dashed var(--line);
+    position:relative;
+  }
+  .token-stat .num{
+    font-family:'Archivo Black',sans-serif;
+    font-size:38px;
+    color:var(--ink);
+    line-height:1;
+  }
+  .token-stat .lbl{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-top:6px;
+    text-align:center;
+    padding:0 10px;
+  }
+
+  .order-grid{
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:20px;
+  }
+  @media (max-width:720px){
+    .order-grid{ grid-template-columns:1fr; }
+    .stats-row{ grid-template-columns:repeat(2,1fr); }
+  }
+
+  .type-toggle{
+    display:flex;
+    gap:10px;
+    margin:14px 0 4px;
+  }
+  .type-toggle button{
+    flex:1;
+    padding:10px;
+    border-radius:3px;
+    border:1.5px solid var(--line);
+    background:#fffdf7;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:1px;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+  .type-toggle button.active.veg{ background:var(--veg-soft); border-color:var(--veg); color:#5c3d0a; font-weight:700; }
+  .type-toggle button.active.nonveg{ background:var(--nonveg-soft); border-color:var(--nonveg); color:#6b2015; font-weight:700; }
+
+  .history-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+    max-height:340px;
+    overflow-y:auto;
+  }
+  .history-list li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:13px;
+  }
+  .history-list li:last-child{ border-bottom:none; }
+  .history-list .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    padding:3px 8px;
+    border-radius:20px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+  }
+  .tag.veg{ background:var(--veg-soft); color:#5c3d0a; }
+  .tag.nonveg{ background:var(--nonveg-soft); color:#6b2015; }
+  .history-list .date{
+    color:var(--ink-soft);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+  }
+  .empty-note{
+    color:var(--ink-soft);
+    font-size:12.5px;
+    font-family:'IBM Plex Mono',monospace;
+    padding:16px 0;
+    text-align:center;
+  }
+
+  .window-note{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:0.3px;
+    padding:9px 12px;
+    border-radius:3px;
+    margin-bottom:6px;
+    border:1px solid var(--line);
+  }
+  .window-note.open{ background:var(--veg-soft); color:#5c3d0a; border-color:var(--veg); }
+  .window-note.closed{ background:var(--nonveg-soft); color:#6b2015; border-color:var(--nonveg); }
+
+  .btn[disabled]{
+    opacity:0.5;
+    cursor:not-allowed;
+    transform:none !important;
+  }
+
+  .history-list li{
+    flex-wrap:wrap;
+    row-gap:6px;
+  }
+
+  .cancel-btn{
+    background:transparent;
+    border:1px solid var(--nonveg);
+    color:var(--nonveg);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    padding:4px 9px;
+    border-radius:20px;
+    cursor:pointer;
+  }
+  .cancel-btn:hover{ background:var(--nonveg-soft); }
+  .cancel-btn[disabled]{
+    opacity:0.4;
+    cursor:not-allowed;
+    border-color:var(--steel);
+    color:var(--steel);
+  }
+  .cancel-btn[disabled]:hover{ background:transparent; }
+</style>
+</head>
+<body>
+
+<div class="board">
+  <header class="site-head">
+    <h1>Canteen Token Counter</h1>
+    <span>mess order desk</span>
+  </header>
+
+  <!-- REGISTER + LOGIN -->
+  <div id="authScreen" class="auth-wrap">
+
+    <div class="ticket" id="loginTicket">
+      <span class="sub">Order Window &mdash; Sign In</span>
+      <h2>Student Login</h2>
+      <label for="loginId">Student ID</label>
+      <input type="text" id="loginId" placeholder="e.g. STU1024">
+      <label for="loginPass">Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password">
+      <button class="btn" onclick="handleLogin()">Login</button>
+      <div class="msg error" id="loginMsg"></div>
+      <div class="switch-line">New here? <a onclick="showRegister()">Register a student ID</a></div>
+    </div>
+
+    <div class="ticket hidden" id="registerTicket">
+      <span class="sub">Order Window &mdash; New Student</span>
+      <h2>Register</h2>
+      <label for="regName">Full Name</label>
+      <input type="text" id="regName" placeholder="Your name">
+      <label for="regId">Student ID</label>
+      <input type="text" id="regId" placeholder="Choose a student ID">
+      <label for="regPass">Password</label>
+      <input type="password" id="regPass" placeholder="Choose a password">
+      <label for="regPass2">Confirm Password</label>
+      <input type="password" id="regPass2" placeholder="Re-enter password">
+      <button class="btn" onclick="handleRegister()">Create Account</button>
+      <div class="msg error" id="regMsg"></div>
+      <div class="switch-line">Already registered? <a onclick="showLogin()">Back to login</a></div>
+    </div>
+
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashScreen" class="hidden">
+
+    <div class="dash-head">
+      <div class="who">Welcome, <span id="dashName">Student</span>
+        <small id="dashId">ID: ------</small>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="token-stat">
+        <div class="num" id="totalOrdersNum">0</div>
+        <div class="lbl">Total Orders</div>
+      </div>
+      <div class="token-stat">
+        <div class="num" id="todayOrdersNum">0</div>
+        <div class="lbl">Today's Orders</div>
+      </div>
+    </div>
+
+    <div class="order-grid">
+
+      <div class="ticket">
+        <span class="sub">Place Order</span>
+        <h2>New Order</h2>
+        <div class="window-note" id="windowNote">Checking order window...</div>
+
+        <label>Food Type</label>
+        <div class="type-toggle">
+          <button type="button" id="btnVeg" class="veg active" onclick="selectType('veg')">Veg</button>
+          <button type="button" id="btnNonveg" class="nonveg" onclick="selectType('nonveg')">Non-Veg</button>
+        </div>
+
+        <label for="itemName">Item Name</label>
+        <input type="text" id="itemName" placeholder="e.g. Paneer Thali">
+
+        <label for="itemQty">Quantity</label>
+        <input type="number" id="itemQty" min="1" value="1">
+
+        <button class="btn" id="placeOrderBtn" onclick="placeOrder()">Place Order</button>
+        <div class="msg ok" id="orderMsg"></div>
+      </div>
+
+      <div class="ticket">
+        <span class="sub">History</span>
+        <h2>Your Orders</h2>
+        <ul class="history-list" id="historyList"></ul>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ---------- simple localStorage "database" ---------- */
+  const USERS_KEY = 'canteen_users';
+  const ORDERS_KEY = 'canteen_orders';
+  const SESSION_KEY = 'canteen_session';
+
+  function getUsers(){ return JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); }
+  function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+  function getOrders(){ return JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]'); }
+  function saveOrders(o){ localStorage.setItem(ORDERS_KEY, JSON.stringify(o)); }
+  function getSession(){ return localStorage.getItem(SESSION_KEY); }
+  function setSession(id){ localStorage.setItem(SESSION_KEY, id); }
+  function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+  let selectedType = 'veg';
+
+  /* ---------- screen switching ---------- */
+  function showRegister(){
+    document.getElementById('loginTicket').classList.add('hidden');
+    document.getElementById('registerTicket').classList.remove('hidden');
+  }
+  function showLogin(){
+    document.getElementById('registerTicket').classList.add('hidden');
+    document.getElementById('loginTicket').classList.remove('hidden');
+  }
+
+  function showAuthScreen(){
+    document.getElementById('authScreen').classList.remove('hidden');
+    document.getElementById('dashScreen').classList.add('hidden');
+  }
+  function showDashScreen(){
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('dashScreen').classList.remove('hidden');
+  }
+
+  /* ---------- register ---------- */
+  function handleRegister(){
+    const name = document.getElementById('regName').value.trim();
+    const id = document.getElementById('regId').value.trim();
+    const pass = document.getElementById('regPass').value;
+    const pass2 = document.getElementById('regPass2').value;
+    const msg = document.getElementById('regMsg');
+
+    if(!name || !id || !pass || !pass2){
+      msg.textContent = 'Please fill in every field.';
+      return;
+    }
+    if(pass !== pass2){
+      msg.textContent = 'Passwords do not match.';
+      return;
+    }
+    const users = getUsers();
+    if(users[id]){
+      msg.textContent = 'That student ID is already registered.';
+      return;
+    }
+    users[id] = { name, password: pass };
+    saveUsers(users);
+    msg.classList.remove('error');
+    msg.classList.add('ok');
+    msg.textContent = 'Account created. You can log in now.';
+    document.getElementById('regName').value = '';
+    document.getElementById('regId').value = '';
+    document.getElementById('regPass').value = '';
+    document.getElementById('regPass2').value = '';
+    setTimeout(()=>{ msg.textContent=''; msg.classList.remove('ok'); msg.classList.add('error'); showLogin(); }, 900);
+  }
+
+  /* ---------- login ---------- */
+  function handleLogin(){
+    const id = document.getElementById('loginId').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const msg = document.getElementById('loginMsg');
+    const users = getUsers();
+
+    if(!id || !pass){
+      msg.textContent = 'Enter both student ID and password.';
+      return;
+    }
+    if(!users[id] || users[id].password !== pass){
+      msg.textContent = 'Incorrect student ID or password.';
+      return;
+    }
+    msg.textContent = '';
+    setSession(id);
+    loadDashboard();
+  }
+
+  function handleLogout(){
+    clearSession();
+    document.getElementById('loginId').value = '';
+    document.getElementById('loginPass').value = '';
+    showLogin();
+    showAuthScreen();
+  }
+
+  /* ---------- ordering window rules ---------- */
+  // Ordering is open from 4:00 PM (16:00) to 9:00 PM (21:00).
+  const ORDER_OPEN_HOUR = 16;
+  const ORDER_CLOSE_HOUR = 21;
+  // Orders can be cancelled up until 7:00 AM the day after they were placed.
+  const CANCEL_CUTOFF_HOUR = 7;
+
+  function isOrderingOpen(){
+    const now = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    return mins >= ORDER_OPEN_HOUR * 60 && mins < ORDER_CLOSE_HOUR * 60;
+  }
+
+  function canStillCancel(order){
+    const placed = new Date(order.date);
+    const cutoff = new Date(placed);
+    cutoff.setDate(cutoff.getDate() + 1);
+    cutoff.setHours(CANCEL_CUTOFF_HOUR, 0, 0, 0);
+    return new Date() < cutoff;
+  }
+
+  function refreshOrderWindowUI(){
+    const note = document.getElementById('windowNote');
+    const btn = document.getElementById('placeOrderBtn');
+    if(!note || !btn) return;
+
+    if(isOrderingOpen()){
+      note.textContent = 'Ordering window is open — closes at 9:00 PM.';
+      note.classList.remove('closed');
+      note.classList.add('open');
+      btn.disabled = false;
+    } else {
+      note.textContent = 'Ordering is closed. Window: 4:00 PM – 9:00 PM.';
+      note.classList.remove('open');
+      note.classList.add('closed');
+      btn.disabled = true;
+    }
+  }
+
+  /* ---------- ordering ---------- */
+  function selectType(type){
+    selectedType = type;
+    document.getElementById('btnVeg').classList.toggle('active', type === 'veg');
+    document.getElementById('btnNonveg').classList.toggle('active', type === 'nonveg');
+    const placeBtn = document.getElementById('placeOrderBtn');
+    placeBtn.classList.remove('veg','nonveg');
+    placeBtn.classList.add(type);
+  }
+
+  function placeOrder(){
+    const id = getSession();
+    if(!id) return;
+    const item = document.getElementById('itemName').value.trim();
+    const qty = parseInt(document.getElementById('itemQty').value, 10) || 1;
+    const msg = document.getElementById('orderMsg');
+    msg.classList.remove('ok');
+    msg.classList.add('error');
+
+    if(!isOrderingOpen()){
+      msg.textContent = 'Ordering is only open from 4:00 PM to 9:00 PM.';
+      return;
+    }
+    if(!item){
+      msg.textContent = 'Enter an item name first.';
+      return;
+    }
+
+    const orders = getOrders();
+    orders.push({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      studentId: id,
+      item,
+      qty,
+      type: selectedType,
+      date: new Date().toISOString()
+    });
+    saveOrders(orders);
+
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemQty').value = 1;
+    msg.classList.remove('error');
+    msg.classList.add('ok');
+    msg.textContent = 'Order placed successfully.';
+    setTimeout(()=>{ msg.textContent=''; msg.classList.remove('ok'); msg.classList.add('error'); }, 1800);
+
+    renderDashboardData(id);
+  }
+
+  /* ---------- dashboard render ---------- */
+  function isToday(isoDate){
+    const d = new Date(isoDate);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() &&
+           d.getMonth() === now.getMonth() &&
+           d.getDate() === now.getDate();
+  }
+
+  function renderDashboardData(id){
+    const orders = getOrders().filter(o => o.studentId === id);
+    const today = orders.filter(o => isToday(o.date));
+
+    document.getElementById('totalOrdersNum').textContent = orders.length;
+    document.getElementById('todayOrdersNum').textContent = today.length;
+
+    const list = document.getElementById('historyList');
+    list.innerHTML = '';
+
+    if(orders.length === 0){
+      list.innerHTML = '<div class="empty-note">No orders yet. Place your first order.</div>';
+      return;
+    }
+
+    orders.slice().reverse().forEach(o => {
+      const li = document.createElement('li');
+      const d = new Date(o.date);
+      const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const cancellable = canStillCancel(o);
+      li.innerHTML = `
+        <span>${escapeHtml(o.item)} &times;${o.qty}</span>
+        <span class="tag ${o.type === 'veg' ? 'veg' : 'nonveg'}">${o.type === 'veg' ? 'Veg' : 'Non-Veg'}</span>
+        <span class="date">${dateStr}</span>
+        <button class="cancel-btn" ${cancellable ? '' : 'disabled'} onclick="cancelOrder('${o.id}')">
+          ${cancellable ? 'Cancel' : 'Locked'}
+        </button>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  function cancelOrder(orderId){
+    const id = getSession();
+    if(!id) return;
+    const orders = getOrders();
+    const target = orders.find(o => o.id === orderId && o.studentId === id);
+    if(!target) return;
+    if(!canStillCancel(target)){
+      return;
+    }
+    const remaining = orders.filter(o => o.id !== orderId);
+    saveOrders(remaining);
+    renderDashboardData(id);
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function loadDashboard(){
+    const id = getSession();
+    if(!id) return;
+    const users = getUsers();
+    const user = users[id];
+    if(!user){ clearSession(); showAuthScreen(); return; }
+
+    document.getElementById('dashName').textContent = user.name;
+    document.getElementById('dashId').textContent = 'ID: ' + id;
+    selectType('veg');
+    renderDashboardData(id);
+    refreshOrderWindowUI();
+    showDashScreen();
+  }
+
+  /* ---------- init ---------- */
+  (function init(){
+    const id = getSession();
+    if(id){
+      loadDashboard();
+    } else {
+      showAuthScreen();
+    }
+    // Keep the ordering window banner and cancel-lock states accurate over time
+    setInterval(() => {
+      const activeId = getSession();
+      if(activeId){
+        refreshOrderWindowUI();
+        renderDashboardData(activeId);
+      }
+    }, 60000);
+  })();
+</script>
+
+</body>
+</html>
