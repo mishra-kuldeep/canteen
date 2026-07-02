@@ -317,18 +317,6 @@
     text-align:center;
   }
 
-  .window-note{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:11.5px;
-    letter-spacing:0.3px;
-    padding:9px 12px;
-    border-radius:3px;
-    margin-bottom:6px;
-    border:1px solid var(--line);
-  }
-  .window-note.open{ background:var(--veg-soft); color:#5c3d0a; border-color:var(--veg); }
-  .window-note.closed{ background:var(--nonveg-soft); color:#6b2015; border-color:var(--nonveg); }
-
   .btn[disabled]{
     opacity:0.5;
     cursor:not-allowed;
@@ -353,13 +341,6 @@
     cursor:pointer;
   }
   .cancel-btn:hover{ background:var(--nonveg-soft); }
-  .cancel-btn[disabled]{
-    opacity:0.4;
-    cursor:not-allowed;
-    border-color:var(--steel);
-    color:var(--steel);
-  }
-  .cancel-btn[disabled]:hover{ background:transparent; }
 </style>
 </head>
 <body>
@@ -380,7 +361,7 @@
       <input type="text" id="loginId" placeholder="e.g. STU1024">
       <label for="loginPass">Password</label>
       <input type="password" id="loginPass" placeholder="Enter password">
-      <button class="btn" onclick="handleLogin()">Suraj</button>
+      <button class="btn" onclick="handleLogin()">Login</button>
       <div class="msg error" id="loginMsg"></div>
       <div class="switch-line">New here? <a onclick="showRegister()">Register a student ID</a></div>
     </div>
@@ -398,7 +379,7 @@
       <input type="password" id="regPass2" placeholder="Re-enter password">
       <button class="btn" onclick="handleRegister()">Create Account</button>
       <div class="msg error" id="regMsg"></div>
-      <div class="switch-line">Already registered? <a onclick="showLogin()">Back to Login</a></div>
+      <div class="switch-line">Already registered? <a onclick="showLogin()">Back to login</a></div>
     </div>
 
   </div>
@@ -429,7 +410,6 @@
       <div class="ticket">
         <span class="sub">Place Order</span>
         <h2>New Order</h2>
-        <div class="window-note" id="">Checking order window...</div>
 
         <label>Food Type</label>
         <div class="type-toggle">
@@ -554,45 +534,6 @@
     showAuthScreen();
   }
 
-  /* ---------- ordering window rules ---------- */
-  // Ordering is open from 4:00 PM (16:00) to 9:00 PM (21:00).
-  const ORDER_OPEN_HOUR = 16;
-  const ORDER_CLOSE_HOUR = 21;
-  // Orders can be cancelled up until 7:00 AM the day after they were placed.
-  const CANCEL_CUTOFF_HOUR = 7;
-
-  function isOrderingOpen(){
-    const now = new Date();
-    const mins = now.getHours() * 60 + now.getMinutes();
-    return mins >= ORDER_OPEN_HOUR * 60 && mins < ORDER_CLOSE_HOUR * 60;
-  }
-
-  function canStillCancel(order){
-    const placed = new Date(order.date);
-    const cutoff = new Date(placed);
-    cutoff.setDate(cutoff.getDate() + 1);
-    cutoff.setHours(CANCEL_CUTOFF_HOUR, 0, 0, 0);
-    return new Date() < cutoff;
-  }
-
-  function refreshOrderWindowUI(){
-    const note = document.getElementById('windowNote');
-    const btn = document.getElementById('placeOrderBtn');
-    if(!note || !btn) return;
-
-    if(isOrderingOpen()){
-      note.textContent = 'Ordering window is open — closes at 9:00 PM.';
-      note.classList.remove('closed');
-      note.classList.add('open');
-      btn.disabled = false;
-    } else {
-      note.textContent = 'Ordering is closed. Window: 4:00 PM – 9:00 PM.';
-      note.classList.remove('open');
-      note.classList.add('closed');
-      btn.disabled = true;
-    }
-  }
-
   /* ---------- ordering ---------- */
   function selectType(type){
     selectedType = type;
@@ -612,10 +553,6 @@
     msg.classList.remove('ok');
     msg.classList.add('error');
 
-    if(!isOrderingOpen()){
-      msg.textContent = 'Ordering is only open from 4:00 PM to 9:00 PM.';
-      return;
-    }
     if(!item){
       msg.textContent = 'Enter an item name first.';
       return;
@@ -670,14 +607,11 @@
       const li = document.createElement('li');
       const d = new Date(o.date);
       const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      const cancellable = canStillCancel(o);
       li.innerHTML = `
         <span>${escapeHtml(o.item)} &times;${o.qty}</span>
         <span class="tag ${o.type === 'veg' ? 'veg' : 'nonveg'}">${o.type === 'veg' ? 'Veg' : 'Non-Veg'}</span>
         <span class="date">${dateStr}</span>
-        <button class="cancel-btn" ${cancellable ? '' : 'disabled'} onclick="cancelOrder('${o.id}')">
-          ${cancellable ? 'Cancel' : 'Locked'}
-        </button>
+        <button class="cancel-btn" onclick="cancelOrder('${o.id}')">Cancel</button>
       `;
       list.appendChild(li);
     });
@@ -689,9 +623,6 @@
     const orders = getOrders();
     const target = orders.find(o => o.id === orderId && o.studentId === id);
     if(!target) return;
-    if(!canStillCancel(target)){
-      return;
-    }
     const remaining = orders.filter(o => o.id !== orderId);
     saveOrders(remaining);
     renderDashboardData(id);
@@ -714,7 +645,6 @@
     document.getElementById('dashId').textContent = 'ID: ' + id;
     selectType('veg');
     renderDashboardData(id);
-    refreshOrderWindowUI();
     showDashScreen();
   }
 
@@ -726,14 +656,6 @@
     } else {
       showAuthScreen();
     }
-    // Keep the ordering window banner and cancel-lock states accurate over time
-    setInterval(() => {
-      const activeId = getSession();
-      if(activeId){
-        refreshOrderWindowUI();
-        renderDashboardData(activeId);
-      }
-    }, 60000);
   })();
 </script>
 
