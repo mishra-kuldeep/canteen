@@ -418,7 +418,7 @@
         </div>
 
         <label for="itemName">Item Name</label>
-        <input type="text" id="itemName" placeholder="e.g. Paneer Thali">
+        <select id="itemName"></select>
 
         <label for="itemQty">Quantity</label>
         <input type="number" id="itemQty" min="1" value="1">
@@ -453,6 +453,56 @@
   function clearSession(){ localStorage.removeItem(SESSION_KEY); }
 
   let selectedType = 'veg';
+
+  /* ---------- food menu ---------- */
+  const FOOD_MENU = {
+    veg: [
+      'Paneer Thali',
+      'Veg Biryani',
+      'Chole Bhature',
+      'Masala Dosa',
+      'Aloo Paratha',
+      'Veg Fried Rice',
+      'Rajma Chawal',
+      'Veg Noodles',
+      'Idli Sambar',
+      'Veg Sandwich',
+      'Mix Veg Curry',
+      'Dal Tadka + Rice',
+      'Veg Momos',
+      'Poha',
+      'Pav Bhaji'
+    ],
+    nonveg: [
+      'Chicken Biryani',
+      'Butter Chicken',
+      'Chicken Curry',
+      'Egg Curry',
+      'Chicken Fried Rice',
+      'Mutton Curry',
+      'Chicken Momos',
+      'Egg Biryani',
+      'Chicken Roll',
+      'Fish Curry',
+      'Chicken Noodles',
+      'Tandoori Chicken',
+      'Egg Fried Rice',
+      'Chicken Sandwich',
+      'Keema Paratha'
+    ]
+  };
+
+  function populateItemDropdown(type){
+    const select = document.getElementById('itemName');
+    if(!select) return;
+    select.innerHTML = '';
+    FOOD_MENU[type].forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item;
+      opt.textContent = item;
+      select.appendChild(opt);
+    });
+  }
 
   /* ---------- screen switching ---------- */
   function showRegister(){
@@ -542,19 +592,20 @@
     const placeBtn = document.getElementById('placeOrderBtn');
     placeBtn.classList.remove('veg','nonveg');
     placeBtn.classList.add(type);
+    populateItemDropdown(type);
   }
 
   function placeOrder(){
     const id = getSession();
     if(!id) return;
-    const item = document.getElementById('itemName').value.trim();
+    const item = document.getElementById('itemName').value;
     const qty = parseInt(document.getElementById('itemQty').value, 10) || 1;
     const msg = document.getElementById('orderMsg');
     msg.classList.remove('ok');
     msg.classList.add('error');
 
     if(!item){
-      msg.textContent = 'Enter an item name first.';
+      msg.textContent = 'Select an item first.';
       return;
     }
 
