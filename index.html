@@ -429,7 +429,7 @@
       <div class="ticket">
         <span class="sub">Place Order</span>
         <h2>New Order</h2>
-        <div class="window-note" id="windowNote">Checking order window...</div>
+        <div class="window-note" id="">Checking order window...</div>
 
         <label>Food Type</label>
         <div class="type-toggle">
@@ -561,7 +561,11 @@
   // Orders can be cancelled up until 7:00 AM the day after they were placed.
   const CANCEL_CUTOFF_HOUR = 7;
 
- 
+  function isOrderingOpen(){
+    const now = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    return mins >= ORDER_OPEN_HOUR * 60 && mins < ORDER_CLOSE_HOUR * 60;
+  }
 
   function canStillCancel(order){
     const placed = new Date(order.date);
